@@ -1,16 +1,17 @@
-import express, { Express, Request, Response } from "express";
-import dotenv from "dotenv";
-import "reflect-metadata"
+import * as bodyParser from "body-parser";
+import express, {Express} from "express";
+import "reflect-metadata";
+import userRoutes from "./users/routes";
 
-dotenv.config();
+require('dotenv').config()
+import { AppDataSource } from "./data-source"
+console.log(process.env)
+AppDataSource.initialize().then(async () => {
+    const app:Express = express();
+    app.use(bodyParser.json());
+    app.use('/', userRoutes);
+    app.listen(3000);
 
-const app:Express = express();
-const port = process.env.PORT;
+    console.log("Express application is up and running on port 3000");
 
-app.get('/', (req, res) => {
-    res.send('Express + TypeScript Server');
-});
-
-app.listen(port, () => {
-    console.log(`[server]: Server is running at http://localhost:${port}`);
-});
+}).catch(error => console.log("TypeORM connection error: ", error))
