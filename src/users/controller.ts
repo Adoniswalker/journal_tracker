@@ -1,8 +1,10 @@
 import {Request, Response} from "express";
-import {User} from "../entities/User";
+import {User} from "./model";
 import {AppDataSource} from "../data-source";
+import {validate} from "class-validator";
+import {createJwtToken} from "../utils/createJwtToken";
+import {JwtPayload} from "../types/JwtPayload";
 
-// app.post('/register', async (req: Request, res: Response) => {
 export async function SignUp(req: Request, res: Response) {
     try {
         const {email, password} = req.body;
@@ -11,13 +13,18 @@ export async function SignUp(req: Request, res: Response) {
         const userRepository = AppDataSource.getRepository(User);
         const existingUser = await userRepository.findOne({where: {email}});
         if (existingUser) {
-            return res.status(400).json({message: 'Email already exists'});
+            return res.status(400).json({email: ` ${existingUser.email} already exists`});
         }
-
-        // Create a new user
-        const newUser = userRepository.create({email, password});
-        await userRepository.save(newUser);
-
+        let user = new User();
+        user.email = email;
+        user.password = password;
+        user.hashPassword();
+        const errors = await validate(user);
+        if (errors.length > 0) {
+            return res.status(403).json(errors)
+        } else {
+            await userRepository.manager.save(user)
+        }
         // Return success response
         return res.status(201).json({message: 'User registered successfully'});
     } catch (error) {
@@ -34,13 +41,26 @@ export async function Login(req: Request, res: Response) {
 
         // Find user by email and password
         const userRepository = AppDataSource.getRepository(User);
-        const user = await userRepository.findOne({where: {email, password}});
+        const user = await userRepository.findOneBy({email: email});
         if (!user) {
-            return res.status(401).json({message: 'Invalid email or password'});
+            return res.status(401).json({message: 'Incorrect email or password'});
         }
+        if (!user.checkIfPasswordMatch(password)) {
+            return res.status(401).json({message: 'Incorrect email or password'});
+        }
+        const jwtPayload: JwtPayload = {
+            id: user.id,
+            email: user.email,
+        };
+        try {
+            const token = createJwtToken(jwtPayload);
+            return res.status(200).json({message: 'Login successful', token: `Bearer ${token}`});
+        } catch (err) {
+            console.log(err)
+            return res.status(401).json({message: 'Token can\'t be created'});
 
+        }
         // Return success response
-        return res.status(200).json({message: 'Login successful'});
     } catch (error) {
         console.error('Error in user login:', error);
         return res.status(500).json({message: 'Internal server error'});

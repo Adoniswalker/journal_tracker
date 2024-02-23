@@ -5,11 +5,12 @@ import userRoutes from "./users/routes";
 
 require('dotenv').config()
 import { AppDataSource } from "./data-source"
-console.log(process.env)
+import journalRoutes from "./jounal/routes";
 AppDataSource.initialize().then(async () => {
     const app:Express = express();
     app.use(bodyParser.json());
-    app.use('/', userRoutes);
+    app.use('/users/', userRoutes);
+    app.use('/journal/', journalRoutes);
     app.listen(3000);
 
     console.log("Express application is up and running on port 3000");
