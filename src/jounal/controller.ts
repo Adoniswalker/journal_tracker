@@ -2,6 +2,7 @@ import {Request, Response} from "express";
 import {AppDataSource} from "../data-source";
 // import {validate} from "class-validator";
 import {Journal} from "./model";
+import logger from "../utils/logger";
 
 export async function CreateJournal(req: Request, res: Response) {
     try {
@@ -15,7 +16,7 @@ export async function CreateJournal(req: Request, res: Response) {
         // }
         return res.status(201).json({message: 'Journal created successfully'});
     } catch (error) {
-        console.error('Error in content creation:', error);
+        logger.error('Error in journal creation:', error);
         return res.status(500).json({message: 'Internal server error'});
     }
 }

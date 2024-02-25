@@ -4,14 +4,15 @@ import envVarsSchema from "./env_validator";
 
 import FormData from 'form-data';
 import Mailgun, {MailgunMessageData} from 'mailgun.js';
+import logger from "./logger";
 
 const mailgun = new Mailgun(FormData);
 const mg = mailgun.client({username: 'api', key: envVarsSchema.MAILGUN_KEY});
 
 const SendEmailHelper = (emailData: MailgunMessageData) => {
     mg.messages.create(envVarsSchema.MAILGUN_DOMAIN, emailData)
-        .then(error => console.log('Email sent successfully:', error))
-        .catch(error => console.error('Error sending email:', error))
+        .then(error => logger.debug('Email sent successfully:', error))
+        .catch(error => logger.error('Error sending email:', error))
 }
 
 export const checkMails = async () => {
@@ -30,7 +31,7 @@ export const checkMails = async () => {
             .select(['journal.id', "journal.content", "journal.createdAt", "author.id", "author.email"])
             .getMany()
         if (!journals.length) {
-            console.log('No journal entries from the previous day to send.');
+            logger.debug('No journal entries from the previous day to send.');
             return;
         }
         const emails: Set<string> = new Set();
@@ -45,8 +46,8 @@ export const checkMails = async () => {
                 text: `Here is a journal entry from another user: ${journal.content}`
             });
             }
-        console.log('Emails queued successfully!');
+        logger.debug('Emails queued successfully!');
     } catch (error) {
-        console.error('Error sending emails:', error);
+        logger.error('Error sending emails:', error);
     }
 }

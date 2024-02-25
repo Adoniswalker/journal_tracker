@@ -10,6 +10,7 @@ import journalRoutes from "./jounal/routes";
 import {checkMails} from "./utils/send_journals";
 import envVarsSchema from "./utils/env_validator";
 import cron from "node-cron";
+import logger from "./utils/logger";
 AppDataSource.initialize().then(async () => {
     const app:Express = express();
     app.use(cors())
@@ -22,7 +23,7 @@ AppDataSource.initialize().then(async () => {
             try {
                 await checkMails()
             } catch (error) {
-                console.error('Error running scheduled task:', error);
+                logger.error('Error running scheduled task:', error);
             }
         };
 
@@ -32,6 +33,6 @@ AppDataSource.initialize().then(async () => {
 // Start the cron job:
     task.start();
 
-    console.log(`Express application is up and running on port ${envVarsSchema.PORT}`);
+    logger.info(`Express application is up and running on port ${envVarsSchema.PORT}`);
 
-}).catch(error => console.log("TypeORM connection error: ", error))
+}).catch(error => logger.error("TypeORM connection error: ", error))

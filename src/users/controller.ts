@@ -3,6 +3,7 @@ import {User} from "./model";
 import {AppDataSource} from "../data-source";
 import {createJwtToken} from "../utils/createJwtToken";
 import {JwtPayload} from "../types/JwtPayload";
+import logger from "../utils/logger";
 
 export async function SignUp(req: Request, res: Response) {
     try {
@@ -22,7 +23,7 @@ export async function SignUp(req: Request, res: Response) {
         // Return success response
         return res.status(201).json({message: 'User registered successfully'});
     } catch (error) {
-        console.error('Error in user registration:', error);
+        logger.error('Error in user registration:', error);
         return res.status(500).json({message: 'Internal server error'});
     }
 }
@@ -50,13 +51,13 @@ export async function Login(req: Request, res: Response) {
             const token = createJwtToken(jwtPayload);
             return res.status(200).json({message: 'Login successful', token: `Bearer ${token}`});
         } catch (err) {
-            console.log(err)
+            logger.error("Error in token creation", err)
             return res.status(401).json({message: 'Token can\'t be created'});
 
         }
         // Return success response
     } catch (error) {
-        console.error('Error in user login:', error);
+        logger.error('Error in user login:', error);
         return res.status(500).json({message: 'Internal server error'});
     }
 }
