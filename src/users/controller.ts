@@ -49,7 +49,7 @@ export async function Login(req: Request, res: Response) {
 
         }
         if (!user.checkIfPasswordMatch(password)) {
-            res.status(401).json(sendErrorRes('Incorrect email or password', {},{
+            return res.status(401).json(sendErrorRes('Incorrect email or password', {},{
                 email: email,
                 password: password
             }, ));
@@ -66,7 +66,7 @@ export async function Login(req: Request, res: Response) {
                     {token: `Bearer ${token}`, email: email}));
         } catch (err) {
             logger.error("Error in token creation", err)
-            res.status(401).json(sendErrorRes('Token can\'t be created', {}, {
+            return res.status(401).json(sendErrorRes('Token can\'t be created', {}, {
                 email: email,
                 password: password
             }));
