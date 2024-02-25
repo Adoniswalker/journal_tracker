@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import validator from 'validator';
 import {ErrorValidation} from "../../types/errors";
+import {sendErrorRes} from "../../utils/responseMessages";
 export const validatorLogin = (req: Request, res: Response, next: NextFunction) => {
     let { email, password } = req.body;
     const errorsValidation: ErrorValidation[] = [];
@@ -21,7 +22,10 @@ export const validatorLogin = (req: Request, res: Response, next: NextFunction) 
     }
 
     if (errorsValidation.length !== 0) {
-        return res.status(401).json({message: errorsValidation});
+        return res.status(401).json(sendErrorRes("Kindly correct the errors", errorsValidation, {
+            email: email,
+            password: password
+        }));
     }
     return next();
 };
@@ -32,7 +36,6 @@ export const validatorRegister = (req: Request, res: Response, next: NextFunctio
 
     email = !email ? '' : email;
     password = !password ? '' : password;
-    passwordConfirm = !passwordConfirm ? '' : passwordConfirm;
 
     if (!validator.isEmail(email)) {
         errorsValidation.push({ email: 'Email is invalid' });
@@ -53,7 +56,7 @@ export const validatorRegister = (req: Request, res: Response, next: NextFunctio
     }
 
     if (errorsValidation.length !== 0) {
-        return res.status(401).json({message: errorsValidation});
+        return res.status(401).json(sendErrorRes("Kindly correct the errors", errorsValidation, {email, password}));
     }
     return next();
 };
