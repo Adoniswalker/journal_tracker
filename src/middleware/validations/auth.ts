@@ -52,14 +52,6 @@ export const validatorRegister = (req: Request, res: Response, next: NextFunctio
         });
     }
 
-    if (validator.isEmpty(passwordConfirm)) {
-        errorsValidation.push({ passwordConfirm: 'Confirm password is required' });
-    }
-
-    if (!validator.equals(password, passwordConfirm)) {
-        errorsValidation.push({ passwordConfirm: 'Passwords must match' });
-    }
-
     if (errorsValidation.length !== 0) {
         return res.status(401).json({message: errorsValidation});
     }
