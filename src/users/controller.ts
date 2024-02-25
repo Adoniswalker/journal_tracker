@@ -1,7 +1,6 @@
 import {Request, Response} from "express";
 import {User} from "./model";
 import {AppDataSource} from "../data-source";
-import {validate} from "class-validator";
 import {createJwtToken} from "../utils/createJwtToken";
 import {JwtPayload} from "../types/JwtPayload";
 
@@ -19,12 +18,7 @@ export async function SignUp(req: Request, res: Response) {
         user.email = email;
         user.password = password;
         user.hashPassword();
-        const errors = await validate(user);
-        if (errors.length > 0) {
-            return res.status(403).json(errors)
-        } else {
-            await userRepository.manager.save(user)
-        }
+        await userRepository.manager.save(user)
         // Return success response
         return res.status(201).json({message: 'User registered successfully'});
     } catch (error) {

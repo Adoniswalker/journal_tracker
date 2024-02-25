@@ -1,21 +1,19 @@
-import cron from "node-cron";
 import {Journal} from "../jounal/model";
 import {AppDataSource} from "../data-source";
-// import {User} from "../users/model";
-import {MoreThanOrEqual} from "typeorm";
-import exp from "node:constants";
-// cron.schedule('0 12 * * *', async () => {
-//
-// });
-type JournalResponse = {
-    id: number;
-    content: string;
-    createdAt: Date;
-    author: {
-        id: number;
-        author: string
-    }
+import envVarsSchema from "./env_validator";
+
+import FormData from 'form-data';
+import Mailgun, {MailgunMessageData} from 'mailgun.js';
+
+const mailgun = new Mailgun(FormData);
+const mg = mailgun.client({username: 'api', key: envVarsSchema.MAILGUN_KEY});
+
+const SendEmailHelper = (emailData: MailgunMessageData) => {
+    mg.messages.create(envVarsSchema.MAILGUN_DOMAIN, emailData)
+        .then(error => console.log('Email sent successfully:', error))
+        .catch(error => console.error('Error sending email:', error))
 }
+
 export const checkMails = async () => {
     try {
         // Get current date and time
@@ -35,62 +33,20 @@ export const checkMails = async () => {
             console.log('No journal entries from the previous day to send.');
             return;
         }
-        type IntKeyObject<T> = {
-            [key: number]: T;
-        };
         const emails: Set<string> = new Set();
         journals.forEach((journal) => {
             emails.add(journal.author.email);
         });
-        const activeUsers = journals.map(journal => ({
-            id: journal.author.id,
-            email: journal.author.email,
-            entries: journals.filter(otherEntry => otherEntry.author.id !== journal.author.id) // Exclude self-posts
-        }));
-        type StringKeyDictionary<T> = {
-            [key: string]: T;
-        };
-        const userMailsToReceive: StringKeyDictionary<Journal[]> = {};
-        journals.forEach(journal => {
-            if (!userMailsToReceive[journal.author.email]) {
-                userMailsToReceive[journal.author.email] = [journal]
-            } else {
-                userMailsToReceive[journal.author.email].push(journal)
+        for (const journal of journals) {
+            SendEmailHelper({
+                from: envVarsSchema.MAILGUN_SENDER,
+                to: Array.from(emails).filter(email => email !== journal.author.email),
+                subject: `Journal entry by ${journal.author.email}`,
+                text: `Here is a journal entry from another user: ${journal.content}`
+            });
             }
-        })
-        console.log('happening')
-
-        // Prepare and send emails to users
-        // for (const email of emails) {
-        //     // const userJournals = journalsByUser[user.id];
-        //     // const randomJournal = userJournals[Math.floor(Math.random() * userJournals.length)];
-        //     for (const journal in journals) {
-        //         const transporter = createTransport({
-        //             // Configure your email transport here
-        //         });
-        //
-        //         await transporter.sendMail({
-        //             from: 'your@email.com',
-        //             to: user.email,
-        //             subject: 'Your random journal entry',
-        //             text: `Here is a journal entry from another user: ${randomJournal.content}`
-        //         });
-        //     }
-        // }
-
-        console.log('Emails sent successfully!');
+        console.log('Emails queued successfully!');
     } catch (error) {
         console.error('Error sending emails:', error);
     }
-}
-
-const dennis = [
-    {'content': "james", 'mail': "dennisngeno7@gmail.com"},
-    {'content': "ngeno", 'mail': "dennisngeno1@gmail.com"},
-    {'content': "mike", 'mail': "dennisngeno2@gmail.com"},
-    {'content': "chemosi", 'mail': "dennisngeno7@gmail.com"},
-]
-const mails = {
-    'dennisngeno7@gmail.com': [{'content': "ngeno", 'mail': "dennisngeno1@gmail.com"},
-        {'content': "mike", 'mail': "dennisngeno2@gmail.com"},]
 }
