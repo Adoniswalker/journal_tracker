@@ -34,19 +34,45 @@ export const checkMails = async () => {
             logger.debug('No journal entries from the previous day to send.');
             return;
         }
-        const emails: Set<string> = new Set();
-        journals.forEach((journal) => {
-            emails.add(journal.author.email);
+
+        interface EntryMap {
+            [authorId: string]: Journal[];
+        }
+
+        const entriesToSend: EntryMap = {};
+
+        // Group journal entries by author
+        journals.forEach(journal => {
+            const authorId: string = journal.author.id.toString();
+            if (!entriesToSend[authorId]) {
+                entriesToSend[authorId] = [];
+            }
+            entriesToSend[authorId].push(journal);
         });
-        for (const journal of journals) {
+
+        // Send entries to random users who posted on the same day
+        const authorIds: string[] = Object.keys(entriesToSend);
+
+        for (const authorId of authorIds) {
+            const recipients: string[] = authorIds.filter(id => id !== authorId);
+
+            if (recipients.length === 0) {
+                logger.debug(`Author with ID ${authorId} is the only author for the day. No entries to send.`);
+                continue;
+            }
+
+            const randomRecipientId: string = recipients[Math.floor(Math.random() * recipients.length)];
+            const randomRecipientEntries: Journal[] = entriesToSend[randomRecipientId];
+            const entryToSend: Journal = randomRecipientEntries[Math.floor(Math.random() * randomRecipientEntries.length)];
+            const recipientEmail: string = entriesToSend[authorId][0].author.email;
             SendEmailHelper({
                 from: envVarsSchema.MAILGUN_SENDER,
-                to: Array.from(emails).filter(email => email !== journal.author.email),
-                subject: `Journal entry by ${journal.author.email}`,
-                text: `Here is a journal entry from another user: ${journal.content}`
+                to: recipientEmail,
+                subject: `Journal entry From One of Your friends`,
+                text: `Here is a journal entry from another user: \n ${entryToSend.content}`
             });
-            }
-        logger.debug('Emails queued successfully!');
+        }
+        logger.info('Emails queued successfully!');
     } catch (error) {
         logger.error('Error sending emails:', error);
     }
