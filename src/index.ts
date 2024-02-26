@@ -18,21 +18,20 @@ AppDataSource.initialize().then(async () => {
     app.use('/users/', userRoutes);
     app.use('/journal/', journalRoutes);
     app.listen(envVarsSchema.PORT);
-    // const task = cron.schedule('0 12 * * *', () => {
-    //     const executeTask = async () => {
-    //         try {
-    //             await checkMails()
-    //         } catch (error) {
-    //             logger.error('Error running scheduled task:', error);
-    //         }
-    //     };
-    //
-    //     executeTask(); // Run the task using the function
-    // });
-    //
-    // task.start();
+    const task = cron.schedule('0 12 * * *', () => {
+        const executeTask = async () => {
+            try {
+                await checkMails()
+            } catch (error) {
+                logger.error('Error running scheduled task:', error);
+            }
+        };
 
-    await checkMails()
+        executeTask(); // Run the task using the function
+    });
+
+    task.start();
+
     logger.info(`Express application is up and running on port ${envVarsSchema.PORT}`);
 
 }).catch(error => logger.error("TypeORM connection error: ", error))
